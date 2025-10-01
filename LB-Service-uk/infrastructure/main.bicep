@@ -1,6 +1,5 @@
 param location string = resourceGroup().location
 param environment string
-param appName string
 param storageAccountName string
 param vmusername string
 @secure() 
