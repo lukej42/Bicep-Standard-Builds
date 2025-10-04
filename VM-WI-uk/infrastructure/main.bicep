@@ -88,4 +88,30 @@ module vm2 './modules/vm.bicep' = {
   }
 }
 
+module keyvault './modules/keyvault.bicep' = {
+  name: 'kvDeploy'
+  params: {
+    name: 'kv-${appName}-${environment}'
+    location: location
+    accessPolicies: [ 
+      {
+        tenantId: tenant().tenantId
+        objectId: vm1.outputs.principalId
+        permissions: {
+          secrets: [ 'get', 'list' ]
+        }
+      }
+      {
+        tenantId: tenant().tenantId
+        objectId: vm2.outputs.principalId
+        permissions: {
+          secrets: [ 'get', 'list' ]
+        }
+      }
+    ]
+  }
+}
+
+
+
 
