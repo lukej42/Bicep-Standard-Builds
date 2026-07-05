@@ -1,31 +1,27 @@
 trigger: none
 
-paths:
-  include:
-    - Bicep-Standard-Builds/AG-frontend-uk/*
-
 pr: none
 
 variables:
   resourceGroupName: 'armbicep'
   location: 'uksouth'
-
   azureServiceConnection: 'Azure subscription 1(1)(525c7c1f-f5e9-4bf4-8d7a-5b7a06889a12)'
 
 stages:
+
 - stage: Validate
-  displayName: "Validate Infrastructure"
+  displayName: Validate Infrastructure
 
   jobs:
-
   - job: Validate
-    displayName: "Build, Validate and What-If"
+    displayName: Build, Validate and What-If
 
     pool:
       vmImage: ubuntu-latest
 
     steps:
     - checkout: self
+
     - task: AzureCLI@2
       displayName: Build / Validate / What-If
       inputs:
@@ -34,25 +30,29 @@ stages:
         scriptLocation: inlineScript
         inlineScript: |
           set -euo pipefail
-          echo "Build Bicep"
+
+          echo "Building Bicep..."
           az bicep build \
-            --file infrastructure/main.bicep
-          echo "Validate"
+            --file Bicep-Standard-Builds/AG-frontend-uk/infrastructure/main.bicep
+
+          echo "Validating deployment..."
           az deployment group validate \
             --resource-group $(resourceGroupName) \
-            --template-file infrastructure/main.bicep \
-            --parameters infrastructure/dev.bicepparam \
+            --template-file Bicep-Standard-Builds/AG-frontend-uk/infrastructure/main.bicep \
+            --parameters Bicep-Standard-Builds/AG-frontend-uk/infrastructure/dev.bicepparam \
             --parameters location=$(location)
-          echo "Running What-If"
+
+          echo "Running What-If..."
           az deployment group what-if \
             --resource-group $(resourceGroupName) \
-            --template-file infrastructure/main.bicep \
-            --parameters infrastructure/dev.bicepparam \
+            --template-file Bicep-Standard-Builds/AG-frontend-uk/infrastructure/main.bicep \
+            --parameters Bicep-Standard-Builds/AG-frontend-uk/infrastructure/dev.bicepparam \
             --parameters location=$(location)
-    - publish: infrastructure
-      artifact: bicep
 
-- stage: Deploy to Dev
+    - publish: Bicep-Standard-Builds/AG-frontend-uk/infrastructure
+      artifact: bicep
+- stage: Deploy_Dev
+  displayName: Deploy to Dev
   dependsOn: Validate
   jobs:
   - deployment: DeployDev
@@ -79,7 +79,8 @@ stages:
                   --parameters $(Pipeline.Workspace)/bicep/dev.bicepparam \
                   --parameters location=$(location)
 
-- stage: Deploy_Test
+- stage: Deploy_Stage
+  displayName: Deploy to Stage
   dependsOn: Deploy_Dev
   jobs:
   - deployment: DeployStage
@@ -107,7 +108,8 @@ stages:
                   --parameters location=$(location)
 
 - stage: Deploy_Production
-  dependsOn: Deploy_Test
+  displayName: Deploy to Production
+  dependsOn: Deploy_Stage
   jobs:
   - deployment: DeployProduction
     displayName: Deploy Production
@@ -141,6 +143,7 @@ stages:
               scriptLocation: inlineScript
               inlineScript: |
                 echo "Verifying deployment..."
-                az deployment group list \
+
+                az deployment group show \
                   --resource-group $(resourceGroupName) \
-                  --query "[0]"
+                  --name prod-$(Build.BuildNumber)
