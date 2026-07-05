@@ -31,7 +31,7 @@ stages:
     - task: AzureCLI@2
       displayName: Build / Validate / What-If
       inputs:
-        azureSubscription: 'Azure subscription 1(525c7c1f-f5e9-4bf4-8d7a-5b7a06889a12)'
+        azureSubscription: 'Azure subscription 1(1)(525c7c1f-f5e9-4bf4-8d7a-5b7a06889a12)'
         scriptType: 'bash'
         scriptLocation: 'inlineScript'
         inlineScript: |
@@ -72,7 +72,7 @@ stages:
           - task: AzureCLI@2
             displayName: Deploy Dev
             inputs:
-              azureSubscription: 'Azure subscription 1(525c7c1f-f5e9-4bf4-8d7a-5b7a06889a12)'
+              azureSubscription: 'Azure subscription 1(1)(525c7c1f-f5e9-4bf4-8d7a-5b7a06889a12)'
               scriptType: 'bash'
               scriptLocation: 'inlineScript'
               inlineScript: |
@@ -144,7 +144,7 @@ stages:
           - task: AzureCLI@2
             displayName: Verify Deployment
             inputs:
-              azureSubscription: 'Azure subscription 1(2)(525c7c1f-f5e9-4bf4-8d7a-5b7a06889a12)'
+              azureSubscription: 'Azure subscription 1(1)(525c7c1f-f5e9-4bf4-8d7a-5b7a06889a12)'
               scriptType: 'bash'
               scriptLocation: 'inlineScript'
               inlineScript: |
