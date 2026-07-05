@@ -1,4 +1,4 @@
 using 'main.bicep'
 
-param vmusername = '<username>'
-param vmpassword = '<password>'
+param vmusername = 'azureadmin'
+param vmpassword = 'Password123?!?'
