@@ -1,4 +1,10 @@
-trigger: none
+trigger:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - Bicep-Standard-Builds/AG-frontend-uk/**
 
 pr: none
 
