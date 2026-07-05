@@ -25,23 +25,23 @@ stages:
     - task: AzureCLI@2
       displayName: Build / Validate / What-If
       inputs:
-        azureSubscription: $(azureServiceConnection)
-        scriptType: bash
-        scriptLocation: inlineScript
+        azureSubscription: 'Azure subscription 1(525c7c1f-f5e9-4bf4-8d7a-5b7a06889a12)'
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
         inlineScript: |
           set -euo pipefail
-
+          
           echo "Building Bicep..."
           az bicep build \
             --file Bicep-Standard-Builds/AG-frontend-uk/infrastructure/main.bicep
-
+          
           echo "Validating deployment..."
           az deployment group validate \
             --resource-group $(resourceGroupName) \
             --template-file Bicep-Standard-Builds/AG-frontend-uk/infrastructure/main.bicep \
             --parameters Bicep-Standard-Builds/AG-frontend-uk/infrastructure/dev.bicepparam \
             --parameters location=$(location)
-
+          
           echo "Running What-If..."
           az deployment group what-if \
             --resource-group $(resourceGroupName) \
@@ -66,9 +66,9 @@ stages:
           - task: AzureCLI@2
             displayName: Deploy Dev
             inputs:
-              azureSubscription: $(azureServiceConnection)
-              scriptType: bash
-              scriptLocation: inlineScript
+              azureSubscription: 'Azure subscription 1(525c7c1f-f5e9-4bf4-8d7a-5b7a06889a12)'
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
               inlineScript: |
                 set -euo pipefail
                 az deployment group create \
@@ -94,9 +94,9 @@ stages:
           - task: AzureCLI@2
             displayName: Deploy Test
             inputs:
-              azureSubscription: $(azureServiceConnection)
-              scriptType: bash
-              scriptLocation: inlineScript
+              azureSubscription: 'Azure subscription 1(4)(525c7c1f-f5e9-4bf4-8d7a-5b7a06889a12)'
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
               inlineScript: |
                 set -euo pipefail
                 az deployment group create \
@@ -123,9 +123,9 @@ stages:
           - task: AzureCLI@2
             displayName: Deploy Production
             inputs:
-              azureSubscription: $(azureServiceConnection)
-              scriptType: bash
-              scriptLocation: inlineScript
+              azureSubscription: 'Azure subscription 1(3)(525c7c1f-f5e9-4bf4-8d7a-5b7a06889a12)'
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
               inlineScript: |
                 set -euo pipefail
                 az deployment group create \
@@ -138,12 +138,12 @@ stages:
           - task: AzureCLI@2
             displayName: Verify Deployment
             inputs:
-              azureSubscription: $(azureServiceConnection)
-              scriptType: bash
-              scriptLocation: inlineScript
+              azureSubscription: 'Azure subscription 1(2)(525c7c1f-f5e9-4bf4-8d7a-5b7a06889a12)'
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
               inlineScript: |
                 echo "Verifying deployment..."
-
+                
                 az deployment group show \
                   --resource-group $(resourceGroupName) \
                   --name prod-$(Build.BuildNumber)
