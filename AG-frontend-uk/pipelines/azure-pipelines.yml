@@ -1,0 +1,142 @@
+trigger: none
+
+pr: none
+
+variables:
+  resourceGroupName: 'armbicep'
+  location: 'uksouth'
+
+  azureServiceConnection: 'Azure subscription 1(1)(525c7c1f-f5e9-4bf4-8d7a-5b7a06889a12)'
+
+stages:
+- stage: Validate
+  displayName: "Validate Infrastructure"
+
+  jobs:
+
+  - job: Validate
+    displayName: "Build, Validate and What-If"
+
+    pool:
+      vmImage: ubuntu-latest
+
+    steps:
+    - checkout: self
+    - task: AzureCLI@2
+      displayName: Build / Validate / What-If
+      inputs:
+        azureSubscription: $(azureServiceConnection)
+        scriptType: bash
+        scriptLocation: inlineScript
+        inlineScript: |
+          set -euo pipefail
+          echo "Build Bicep"
+          az bicep build \
+            --file infrastructure/main.bicep
+          echo "Validate"
+          az deployment group validate \
+            --resource-group $(resourceGroupName) \
+            --template-file infrastructure/main.bicep \
+            --parameters infrastructure/dev.bicepparam \
+            --parameters location=$(location)
+          echo "Running What-If"
+          az deployment group what-if \
+            --resource-group $(resourceGroupName) \
+            --template-file infrastructure/main.bicep \
+            --parameters infrastructure/dev.bicepparam \
+            --parameters location=$(location)
+    - publish: infrastructure
+      artifact: bicep
+
+- stage: Deploy to Dev
+  dependsOn: Validate
+  jobs:
+  - deployment: DeployDev
+    environment: Dev
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - download: current
+            artifact: bicep
+          - task: AzureCLI@2
+            displayName: Deploy Dev
+            inputs:
+              azureSubscription: $(azureServiceConnection)
+              scriptType: bash
+              scriptLocation: inlineScript
+              inlineScript: |
+                set -euo pipefail
+                az deployment group create \
+                  --name dev-$(Build.BuildNumber) \
+                  --mode Incremental \
+                  --resource-group $(resourceGroupName) \
+                  --template-file $(Pipeline.Workspace)/bicep/main.bicep \
+                  --parameters $(Pipeline.Workspace)/bicep/dev.bicepparam \
+                  --parameters location=$(location)
+
+- stage: Deploy_Test
+  dependsOn: Deploy_Dev
+  jobs:
+  - deployment: DeployStage
+    environment: Stage
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - download: current
+            artifact: bicep
+          - task: AzureCLI@2
+            displayName: Deploy Test
+            inputs:
+              azureSubscription: $(azureServiceConnection)
+              scriptType: bash
+              scriptLocation: inlineScript
+              inlineScript: |
+                set -euo pipefail
+                az deployment group create \
+                  --name test-$(Build.BuildNumber) \
+                  --mode Incremental \
+                  --resource-group $(resourceGroupName) \
+                  --template-file $(Pipeline.Workspace)/bicep/main.bicep \
+                  --parameters $(Pipeline.Workspace)/bicep/test.bicepparam \
+                  --parameters location=$(location)
+
+- stage: Deploy_Production
+  dependsOn: Deploy_Test
+  jobs:
+  - deployment: DeployProduction
+    displayName: Deploy Production
+    environment: Production
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - download: current
+            artifact: bicep
+          - task: AzureCLI@2
+            displayName: Deploy Production
+            inputs:
+              azureSubscription: $(azureServiceConnection)
+              scriptType: bash
+              scriptLocation: inlineScript
+              inlineScript: |
+                set -euo pipefail
+                az deployment group create \
+                  --name prod-$(Build.BuildNumber) \
+                  --mode Incremental \
+                  --resource-group $(resourceGroupName) \
+                  --template-file $(Pipeline.Workspace)/bicep/main.bicep \
+                  --parameters $(Pipeline.Workspace)/bicep/prod.bicepparam \
+                  --parameters location=$(location)
+          - task: AzureCLI@2
+            displayName: Verify Deployment
+            inputs:
+              azureSubscription: $(azureServiceConnection)
+              scriptType: bash
+              scriptLocation: inlineScript
+              inlineScript: |
+                echo "Verifying deployment..."
+                az deployment group list \
+                  --resource-group $(resourceGroupName) \
+                  --query "[0]"
