@@ -4,7 +4,7 @@ trigger:
       - main
   paths:
     include:
-      - Bicep-Standard-Builds/AG-frontend-uk/**
+      - Bicep-Standard-Builds/AG-frontend-uk/*
 
 pr: none
 
@@ -35,6 +35,13 @@ stages:
         scriptType: 'bash'
         scriptLocation: 'inlineScript'
         inlineScript: |
+
+          echo "REPO ROOT CONTENTS:"
+          ls
+
+          echo "FULL TREE:"
+          ls -R
+
           set -euo pipefail
           
           echo "Building Bicep..."
