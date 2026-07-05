@@ -1,5 +1,9 @@
 trigger: none
 
+paths:
+  include:
+    - Bicep-Standard-Builds/AG-frontend-uk/*
+
 pr: none
 
 variables:
